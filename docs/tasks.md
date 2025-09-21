@@ -52,9 +52,9 @@ npm i @supabase/supabase-js
 
 
 ## 3) Environment & Secrets
-- [ ] Create `.env` entries for dev
-  - [ ] `SUPABASE_URL=...`
-  - [ ] `SUPABASE_KEY=...`
+- [x] Create `.env` entries for dev
+  - [x] `SUPABASE_URL=...`
+  - [x] `SUPABASE_KEY=...`
   - [ ] (Server-only) `SUPABASE_SERVICE_ROLE_KEY=...` (do not expose publicly)
 - [ ] Ensure production secrets are configured in your hosting platform
 - [ ] Confirm `runtimeConfig` in `nuxt.config.ts` reads these values and exposes only what’s safe to the client

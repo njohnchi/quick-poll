@@ -7,34 +7,41 @@ export type AuthUser = {
 }
 
 export function useAuth() {
-  const user = useState<AuthUser | null>('auth:user', () => null)
+  const supabase = useSupabaseClient()
+  const supabaseUser = useSupabaseUser()
+  const session = useSupabaseSession()
 
-  const isAuthenticated = computed(() => !!user.value)
+  const user = computed<AuthUser | null>(() => {
+    const u = supabaseUser.value
+    if (!u) return null
+    const name = (u.user_metadata?.name as string | undefined) || (u.email?.split('@')[0] ?? 'User')
+    return { id: u.id, name, email: u.email ?? '' }
+  })
 
-  async function login(email: string, _password: string) {
-    // Placeholder: simulate login
-    user.value = {
-      id: 'u_' + Math.random().toString(36).slice(2, 9),
-            name: 'Anonymous User',
-      email,
-    }
+  const isAuthenticated = computed(() => !!session.value && !!supabaseUser.value)
+
+  async function login(email: string, password: string) {
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) throw error
     return true
   }
 
-  async function register(name: string, email: string, _password: string) {
-    // Placeholder: simulate registration, then auto-login
-    user.value = {
-      id: 'u_' + Math.random().toString(36).slice(2, 9),
-      name,
+  async function register(name: string, email: string, password: string) {
+    const { error } = await supabase.auth.signUp({
       email,
-    }
+      password,
+      options: {
+        data: { name },
+      },
+    })
+    if (error) throw error
     return true
   }
 
   async function logout() {
-    user.value = null
+    const { error } = await supabase.auth.signOut()
+    if (error) throw error
   }
 
   return { user, isAuthenticated, login, register, logout }
 }
-
