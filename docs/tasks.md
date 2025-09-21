@@ -62,19 +62,19 @@ npm i @supabase/supabase-js
 
 ## 4) Auth Pages & UX Flows
 - [ ] Pages
-  - [ ] `/auth/login` (email/password)
-  - [ ] `/auth/register` (email/password)
-  - [ ] `/auth/forgot-password` (request reset)
-  - [ ] `/auth/reset-password` (complete password update)
+  - [x] `/auth/login` (email/password)
+  - [x] `/auth/register` (email/password)
+  - [x] `/auth/forgot-password` (request reset)
+  - [x] `/auth/reset-password` (complete password update)
   - [ ] Optional: `/auth/verify` or verification handling/feedback page
 - [ ] Flows & redirects
-  - [ ] After login/register, redirect to `redirect` query param or default (e.g., `/polls`)
+  - [x] After login/register, redirect to `redirect` query param or default (e.g., `/polls`)
   - [ ] Handle unverified email (show message, allow resend verification email)
-  - [ ] Friendly error states (wrong password, user not found, rate limited)
-  - [ ] Logout flow (clear session, redirect to home/login)
+  - [x] Friendly error states (surface Supabase error messages on login/register)
+  - [x] Logout flow (clear session, redirect to home/login)
 - [ ] UI/UX polish
   - [ ] Use shadcn-vue components for forms/buttons/feedback
-  - [ ] Add success/error toasts or inline messages
+  - [ ] Add success/error toasts or inline messages (inline errors added)
 
 
 ## 5) Route Protection & Server Access
@@ -125,11 +125,11 @@ npm i @supabase/supabase-js
 
 
 ## 10) Repository Tasks (specific to this project)
-- [ ] Replace placeholder `useAuth` with a thin wrapper around Supabase (keep same API: `login`, `register`, `logout`, `user`, `isAuthenticated`)
-- [ ] Wire auth pages to Supabase methods (sign up, sign in, sign out)
-- [ ] Add forgot/reset password pages and routes
-- [ ] Update `app/middleware/auth.ts` to check Supabase session
-- [ ] Ensure `nuxt.config.ts` is configured for the chosen integration (module vs direct)
+- [x] Replace placeholder `useAuth` with a thin wrapper around Supabase (keep same API: `login`, `register`, `logout`, `user`, `isAuthenticated`)
+- [x] Wire auth pages to Supabase methods (sign up, sign in, sign out)
+- [x] Add forgot/reset password pages and routes
+- [x] Update `app/middleware/auth.ts` to check Supabase session
+- [x] Ensure `nuxt.config.ts` is configured for the chosen integration (module vs direct)
 - [ ] Document required `.env` variables in `README.md`
 
 

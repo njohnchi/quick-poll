@@ -1,10 +1,9 @@
-import { useAuth } from '@/composables/useAuth'
+import { useSupabaseSession } from '#imports'
 
 export default defineNuxtRouteMiddleware((to) => {
-  const { isAuthenticated } = useAuth()
-  if (!isAuthenticated.value) {
+  const session = useSupabaseSession()
+  if (!session.value) {
     const redirect = encodeURIComponent(to.fullPath)
     return navigateTo(`/auth/login?redirect=${redirect}`)
   }
 })
-

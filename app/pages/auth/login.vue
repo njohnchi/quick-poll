@@ -28,7 +28,8 @@ async function onSubmit() {
     await login(email.value, password.value)
     router.push(redirectTo.value)
   } catch (e) {
-    error.value = 'Login failed. Please try again.'
+    const msg = (e as any)?.message || 'Login failed. Please try again.'
+    error.value = msg
   } finally {
     loading.value = false
   }
@@ -59,7 +60,10 @@ async function onSubmit() {
         </form>
       </CardContent>
       <CardFooter>
-        <NuxtLink to="/auth/register" class="text-sm text-primary underline">Need an account? Register</NuxtLink>
+        <div class="flex w-full items-center justify-between text-sm">
+          <NuxtLink to="/auth/register" class="text-primary underline">Need an account? Register</NuxtLink>
+          <NuxtLink to="/auth/forgot-password" class="text-muted-foreground hover:underline">Forgot password?</NuxtLink>
+        </div>
       </CardFooter>
     </Card>
   </div>
