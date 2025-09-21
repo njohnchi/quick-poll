@@ -82,6 +82,40 @@ votes(id, option_id, user_id, created_at)
 
 ---
 
+## 🔐 Supabase Auth (Option A: Nuxt Module)
+
+We use the official Nuxt Supabase module for SSR-friendly sessions via cookies. Email verification is disabled (users can sign in without verifying).
+
+What’s wired
+- @nuxtjs/supabase installed and registered in `nuxt.config.ts`.
+- Cookie and redirect options configured (login route: `/auth/login`).
+- `.env.example` added with required variables: `SUPABASE_URL`, `SUPABASE_KEY`.
+
+Required environment variables
+- SUPABASE_URL: Your project URL (https://YOUR-REF.supabase.co)
+- SUPABASE_KEY: Your anon public key
+
+Quickstart (Windows cmd)
+```bat
+copy .env.example .env
+REM Edit .env and set SUPABASE_URL and SUPABASE_KEY
+npm run dev
+```
+
+Supabase dashboard configuration
+- Auth → Providers → Email: enable Email/Password
+- Auth → Settings:
+  - Site URL: your local and production URLs
+  - Allowed Redirect URLs: add any auth-related routes you’ll use (e.g., reset password)
+  - Email confirmations: disabled (per project decision)
+
+Next steps
+- Replace the placeholder `useAuth` composable with Supabase-backed methods (same API surface).
+- Update auth pages to call Supabase (sign in/up/out) and use `useSupabaseSession()` for auth state.
+- Add forgot/reset password flows when ready.
+
+---
+
 ## 📝 Prompting Strategy
 
 ### Feature Prompt
