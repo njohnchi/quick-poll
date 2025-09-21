@@ -18,7 +18,7 @@ export default defineNuxtConfig({
             // The `callback` option allows you to specify a URL to redirect users to after email verification.
       // We are not using email verification callbacks right now, so this is set to undefined.
       callback: undefined,
-      include: undefined,
+      include: ['/polls/new'],
       exclude: [],
       saveRedirectToCookie: true,
     },
