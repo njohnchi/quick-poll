@@ -30,5 +30,10 @@ export default defineNuxtConfig({
       secure: process.env.NODE_ENV === 'production'
     },
     // Client options can be customized later if needed
+  },
+  nitro: {
+    experimental: {
+      tasks: true
+    }
   }
 })
