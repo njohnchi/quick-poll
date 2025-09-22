@@ -1,6 +1,7 @@
 // filepath: c:\www\quick-poll\server\api\polls\[id]\options.put.ts
 import { serverSupabaseUser } from '#supabase/server'
 import { and, asc, eq, inArray } from 'drizzle-orm'
+import { useRealtimeHub } from '../../../utils/realtime'
 
 function isUuid(id: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
@@ -93,6 +94,9 @@ export default defineEventHandler(async (event) => {
     .from(schema.pollOptions)
     .where(eq(schema.pollOptions.pollId, pollId))
     .orderBy(asc(schema.pollOptions.position))
+
+  const hub = useRealtimeHub()
+  hub.broadcast({ type: 'poll-options-updated', pollId })
 
   return { options: updated }
 })
