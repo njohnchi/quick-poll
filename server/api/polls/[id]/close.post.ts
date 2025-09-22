@@ -2,6 +2,10 @@
 import { serverSupabaseUser } from '#supabase/server'
 import { eq } from 'drizzle-orm'
 
+function isUuid(id: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+}
+
 export default defineEventHandler(async (event) => {
   const db = useDb()
   const schema = useDbSchema()
@@ -11,8 +15,8 @@ export default defineEventHandler(async (event) => {
   }
 
   const id = getRouterParam(event, 'id')
-  if (!id) {
-    throw createError({ statusCode: 400, statusMessage: 'Missing poll id' })
+  if (!id || !isUuid(id)) {
+    throw createError({ statusCode: 400, statusMessage: 'Missing or invalid poll id' })
   }
 
   const [poll] = await db.select().from(schema.polls).where(eq(schema.polls.id, id)).limit(1)
@@ -34,4 +38,3 @@ export default defineEventHandler(async (event) => {
 
   return updated
 })
-

@@ -1,18 +1,32 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card'
 import { useAuth } from '@/composables/useAuth'
 
+function isUuid(id: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+}
+
 const route = useRoute()
 const router = useRouter()
-const pollId = computed(() => String(route.params.id))
+const pollId = computed(() => (typeof route.params.id === 'string' ? route.params.id : null))
 
 const { user } = useAuth()
 
-const { data: poll, status, error, refresh } = await useFetch(() => `/api/polls/${pollId.value}`)
+const { data: poll, status, error, refresh, execute } = await useLazyFetch(() => (pollId.value ? `/api/polls/${pollId.value}` : ''), {
+  immediate: false,
+})
+
+watch(
+  pollId,
+  (id) => {
+    if (id && isUuid(id)) execute()
+  },
+  { immediate: true }
+)
 
 const selected = ref<string | null>(null)
 const voted = ref(false)
@@ -25,11 +39,12 @@ function percent(votes: number) {
 }
 
 const requestURL = useRequestURL()
-const shareUrl = computed(() => new URL(`/polls/${pollId.value}`, `${requestURL.protocol}//${requestURL.host}`).toString())
+const shareUrl = computed(() => (poll.value ? new URL(`/polls/${poll.value.id}`, `${requestURL.protocol}//${requestURL.host}`).toString() : ''))
 const copyOk = ref<string | null>(null)
 async function copyShareLink() {
   copyOk.value = null
   try {
+    if (!shareUrl.value) return
     await navigator.clipboard.writeText(shareUrl.value)
     copyOk.value = 'Link copied!'
     setTimeout(() => (copyOk.value = null), 2000)
@@ -106,10 +121,10 @@ async function closePoll() {
         <div class="mt-6 grid gap-3">
           <div class="flex items-center gap-2">
             <Input :value="shareUrl" readonly class="flex-1" />
-            <Button variant="outline" @click="copyShareLink">Copy link</Button>
+            <Button variant="outline" @click="copyShareLink" :disabled="!shareUrl">Copy link</Button>
             <span v-if="copyOk" class="text-xs text-muted-foreground">{{ copyOk }}</span>
           </div>
-          <div class="flex items-center gap-4">
+          <div class="flex items-center gap-4" v-if="shareUrl">
             <BaseQrCode :value="shareUrl" :size="128" />
             <p class="text-xs text-muted-foreground">Scan this QR code to open the poll.</p>
           </div>

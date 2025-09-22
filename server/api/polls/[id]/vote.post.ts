@@ -3,13 +3,17 @@ import { and, eq } from 'drizzle-orm'
 import { getCookie, setCookie } from 'h3'
 import { randomUUID } from 'crypto'
 
+function isUuid(id: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+}
+
 export default defineEventHandler(async (event) => {
   const db = useDb()
   const schema = useDbSchema()
 
   const pollId = getRouterParam(event, 'id')
-  if (!pollId) {
-    throw createError({ statusCode: 400, statusMessage: 'Missing poll id' })
+  if (!pollId || !isUuid(pollId)) {
+    throw createError({ statusCode: 400, statusMessage: 'Missing or invalid poll id' })
   }
 
   // Ensure poll exists and not closed
@@ -23,8 +27,8 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody<{ optionId?: string }>(event)
   const optionId = (body.optionId ?? '').trim()
-  if (!optionId) {
-    throw createError({ statusCode: 400, statusMessage: 'Missing option id' })
+  if (!optionId || !isUuid(optionId)) {
+    throw createError({ statusCode: 400, statusMessage: 'Missing or invalid option id' })
   }
 
   // Validate option belongs to poll
