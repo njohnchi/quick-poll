@@ -6,19 +6,15 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
-import { useAuth } from '@/composables/useAuth'
-import { usePolls } from '@/composables/usePolls'
 
 definePageMeta({ middleware: 'auth' })
 
 const title = ref('')
-const description = ref('') // Reserved for future use
+const description = ref('') // optional
 const optionInputs = ref<string[]>(['', ''])
 const loading = ref(false)
 const error = ref<string | null>(null)
 
-const { user } = useAuth()
-const { createPoll } = usePolls()
 const router = useRouter()
 
 const canSubmit = computed(() => {
@@ -41,10 +37,11 @@ async function onSubmit() {
   loading.value = true
   try {
     const options = optionInputs.value.map(o => o.trim()).filter(Boolean)
-    const poll = createPoll(title.value.trim(), options, user.value?.id)
-    router.push(`/polls/${poll.id}`)
-  } catch (e) {
-    error.value = 'Failed to create poll. Please try again.'
+    const payload = { title: title.value.trim(), description: description.value.trim() || null, options }
+    const res = await $fetch<{ id: string }>('/api/polls', { method: 'POST', body: payload })
+    await router.push(`/polls/${res.id}`)
+  } catch (e: any) {
+    error.value = e?.data?.statusMessage || e?.message || 'Failed to create poll. Please try again.'
   } finally {
     loading.value = false
   }
@@ -76,7 +73,7 @@ async function onSubmit() {
               <Button type="button" variant="outline" size="sm" @click="addOption">Add option</Button>
             </div>
             <div class="grid gap-2">
-              <div v-for="(opt, i) in optionInputs" :key="i" class="flex items-center gap-2">
+              <div v-for="(_, i) in optionInputs" :key="i" class="flex items-center gap-2">
                 <Input :id="`option-${i}`" v-model="optionInputs[i]" :placeholder="`Option #${i + 1}`" />
                 <Button type="button" variant="ghost" size="sm" @click="removeOption(i)" :disabled="optionInputs.length <= 2">Remove</Button>
               </div>
@@ -94,4 +91,3 @@ async function onSubmit() {
     </Card>
   </div>
 </template>
-

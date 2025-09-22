@@ -1,6 +1,6 @@
 import postgres from 'postgres'
 import { drizzle } from 'drizzle-orm/postgres-js'
-import * as schema from '@/server/db/drizzle-schema'
+import * as schema from '../db/drizzle-schema'
 
 let _db: ReturnType<typeof drizzle> | null = null
 

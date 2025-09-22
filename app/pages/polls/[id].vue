@@ -3,24 +3,32 @@ import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card'
-import { usePolls } from '@/composables/usePolls'
 
 const route = useRoute()
 const router = useRouter()
 const pollId = computed(() => String(route.params.id))
 
-const { getPoll, vote } = usePolls()
-const poll = computed(() => getPoll(pollId.value))
+const { data: poll, status, error, refresh } = await useFetch(() => `/api/polls/${pollId.value}`)
 
 const selected = ref<string | null>(null)
 const voted = ref(false)
+const voteError = ref<string | null>(null)
 
-function onVote(optionId: string) {
+async function onVote(optionId: string) {
   if (!poll.value) return
-  const ok = vote(poll.value.id, optionId)
-  if (ok) {
+  voteError.value = null
+  try {
+    await $fetch(`/api/polls/${poll.value.id}/vote`, { method: 'POST', body: { optionId } })
     selected.value = optionId
     voted.value = true
+    await refresh()
+  } catch (e: any) {
+    const statusCode = e?.data?.statusCode || e?.statusCode
+    if (statusCode === 401) {
+      const redirect = encodeURIComponent(`/polls/${poll.value.id}`)
+      return router.push(`/auth/login?redirect=${redirect}`)
+    }
+    voteError.value = e?.data?.statusMessage || e?.message || 'Failed to submit vote.'
   }
 }
 </script>
@@ -29,7 +37,10 @@ function onVote(optionId: string) {
   <div class="container mx-auto max-w-3xl p-4">
     <Button variant="ghost" class="mb-4" @click="router.push('/polls')">← Back to polls</Button>
 
-    <Card v-if="poll">
+    <div v-if="status === 'pending'" class="text-muted-foreground">Loading…</div>
+    <div v-else-if="error" class="text-destructive">Failed to load poll.</div>
+
+    <Card v-else-if="poll">
       <CardHeader>
         <CardTitle>{{ poll.title }}</CardTitle>
       </CardHeader>
@@ -42,6 +53,7 @@ function onVote(optionId: string) {
             <span class="text-sm text-muted-foreground min-w-12 text-right">{{ opt.votes }}</span>
           </div>
         </div>
+        <p v-if="voteError" class="mt-3 text-sm text-destructive">{{ voteError }}</p>
       </CardContent>
       <CardFooter>
         <p v-if="voted" class="text-sm text-muted-foreground">Thanks for voting!</p>
@@ -51,4 +63,3 @@ function onVote(optionId: string) {
     <div v-else class="text-muted-foreground">Poll not found.</div>
   </div>
 </template>
-
