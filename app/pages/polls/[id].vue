@@ -32,10 +32,15 @@ const selected = ref<string | null>(null)
 const voted = ref(false)
 const voteError = ref<string | null>(null)
 
-const totalVotes = computed(() => (poll.value ? poll.value.options.reduce((sum: number, o: any) => sum + (o.votes || 0), 0) : 0))
+const optionsList = computed(() => {
+  const opts = poll.value?.options
+  return Array.isArray(opts) ? opts : []
+})
+
+const totalVotes = computed(() => optionsList.value.reduce((sum: number, o: any) => sum + (o?.votes || 0), 0))
 function percent(votes: number) {
   const t = totalVotes.value
-  return t > 0 ? Math.round((votes / t) * 100) : 0
+  return t > 0 ? Math.round(((votes || 0) / t) * 100) : 0
 }
 
 const requestURL = useRequestURL()
@@ -105,7 +110,7 @@ async function closePoll() {
       </CardHeader>
       <CardContent>
         <div class="grid gap-2">
-          <div v-for="opt in poll.options" :key="opt.id" class="flex items-center justify-between gap-4">
+          <div v-for="opt in optionsList" :key="opt.id" class="flex items-center justify-between gap-4">
             <Button :variant="selected === opt.id ? 'default' : 'outline'"
                     class="flex-1 justify-start"
                     :disabled="!!poll.closedAt"
