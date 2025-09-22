@@ -14,13 +14,12 @@ const description = ref('') // optional
 const optionInputs = ref<string[]>(['', ''])
 const loading = ref(false)
 const error = ref<string | null>(null)
+const showPreview = ref(false)
 
 const router = useRouter()
 
-const canSubmit = computed(() => {
-  const validOptions = optionInputs.value.map(o => o.trim()).filter(Boolean)
-  return title.value.trim().length > 0 && validOptions.length >= 2
-})
+const validOptions = computed(() => optionInputs.value.map(o => o.trim()).filter(Boolean))
+const canSubmit = computed(() => title.value.trim().length > 0 && validOptions.value.length >= 2)
 
 function addOption() {
   optionInputs.value.push('')
@@ -31,12 +30,21 @@ function removeOption(index: number) {
   optionInputs.value.splice(index, 1)
 }
 
+function onPreview() {
+  if (!canSubmit.value) return
+  showPreview.value = true
+}
+
+function backToEdit() {
+  showPreview.value = false
+}
+
 async function onSubmit() {
   if (!canSubmit.value) return
   error.value = null
   loading.value = true
   try {
-    const options = optionInputs.value.map(o => o.trim()).filter(Boolean)
+    const options = validOptions.value
     const payload = { title: title.value.trim(), description: description.value.trim() || null, options }
     const res = await $fetch<{ id: string }>('/api/polls', { method: 'POST', body: payload })
     await router.push(`/polls/${res.id}`)
@@ -50,13 +58,13 @@ async function onSubmit() {
 
 <template>
   <div class="container mx-auto max-w-3xl p-4">
-    <Card>
+    <Card v-if="!showPreview">
       <CardHeader>
         <CardTitle>New Poll</CardTitle>
         <CardDescription>Create a new poll with at least two options.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form @submit.prevent="onSubmit" class="space-y-6">
+        <form @submit.prevent="onPreview" class="space-y-6">
           <div class="space-y-2">
             <Label for="title">Title</Label>
             <Input id="title" v-model="title" placeholder="What should we vote on?" required />
@@ -86,7 +94,31 @@ async function onSubmit() {
       </CardContent>
       <CardFooter class="gap-2">
         <Button variant="outline" @click="router.push('/polls')">Cancel</Button>
-        <Button :disabled="loading || !canSubmit" @click="onSubmit">{{ loading ? 'Creating…' : 'Create poll' }}</Button>
+        <Button :disabled="loading || !canSubmit" @click="onPreview">Preview</Button>
+      </CardFooter>
+    </Card>
+
+    <Card v-else>
+      <CardHeader>
+        <CardTitle>Preview</CardTitle>
+        <CardDescription>Review your poll before publishing.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div class="space-y-4">
+          <div>
+            <h2 class="text-xl font-semibold">{{ title }}</h2>
+            <p v-if="description" class="text-sm text-muted-foreground mt-1">{{ description }}</p>
+          </div>
+          <div class="grid gap-2">
+            <Button v-for="(opt, i) in validOptions" :key="i" variant="outline" class="justify-start" disabled>
+              {{ opt }}
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+      <CardFooter class="gap-2">
+        <Button variant="outline" @click="backToEdit">Back to edit</Button>
+        <Button :disabled="loading" @click="onSubmit">{{ loading ? 'Creating…' : 'Publish poll' }}</Button>
       </CardFooter>
     </Card>
   </div>

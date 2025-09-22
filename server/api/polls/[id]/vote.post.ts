@@ -1,16 +1,24 @@
 // filepath: c:\www\quick-poll\server\api\polls\[id]\vote.post.ts
-import { serverSupabaseUser } from '#supabase/server'
 import { and, eq } from 'drizzle-orm'
+import { getCookie, setCookie } from 'h3'
+import { randomUUID } from 'crypto'
 
 export default defineEventHandler(async (event) => {
-  const user = await serverSupabaseUser(event)
-  if (!user) {
-    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
-  }
+  const db = useDb()
+  const schema = useDbSchema()
 
   const pollId = getRouterParam(event, 'id')
   if (!pollId) {
     throw createError({ statusCode: 400, statusMessage: 'Missing poll id' })
+  }
+
+  // Ensure poll exists and not closed
+  const [poll] = await db.select().from(schema.polls).where(eq(schema.polls.id, pollId)).limit(1)
+  if (!poll) {
+    throw createError({ statusCode: 404, statusMessage: 'Poll not found' })
+  }
+  if (poll.closedAt) {
+    throw createError({ statusCode: 409, statusMessage: 'This poll is closed and no longer accepts votes.' })
   }
 
   const body = await readBody<{ optionId?: string }>(event)
@@ -18,9 +26,6 @@ export default defineEventHandler(async (event) => {
   if (!optionId) {
     throw createError({ statusCode: 400, statusMessage: 'Missing option id' })
   }
-
-  const db = useDb()
-  const schema = useDbSchema()
 
   // Validate option belongs to poll
   const [opt] = await db
@@ -32,18 +37,25 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Invalid option for this poll' })
   }
 
-  // Ensure the user hasn't voted for this poll yet
-  const already = await db
+  // Anonymous voter token
+  let voterToken = getCookie(event, 'qp_voter') || ''
+  if (!voterToken) {
+    voterToken = randomUUID()
+    // 180 days expiry
+    setCookie(event, 'qp_voter', voterToken, { httpOnly: true, sameSite: 'lax', maxAge: 60 * 60 * 24 * 180, path: '/' })
+  }
+
+  // Enforce one vote per token per poll
+  const existing = await db
     .select({ id: schema.pollVotes.id })
     .from(schema.pollVotes)
-    .where(and(eq(schema.pollVotes.pollId, pollId), eq(schema.pollVotes.userId, user.id)))
+    .where(and(eq(schema.pollVotes.pollId, pollId), eq(schema.pollVotes.voterToken, voterToken)))
     .limit(1)
-  if (already.length) {
+  if (existing.length) {
     throw createError({ statusCode: 409, statusMessage: "You've already voted on this poll" })
   }
 
-  await db.insert(schema.pollVotes).values({ pollId, optionId, userId: user.id })
+  await db.insert(schema.pollVotes).values({ pollId, optionId, voterToken, userId: null })
 
   return { ok: true }
 })
-

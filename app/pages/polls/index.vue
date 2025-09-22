@@ -20,8 +20,9 @@ const { data: polls, status, error } = await useFetch('/api/polls')
     <div v-else class="grid gap-4">
       <Card v-for="poll in polls || []" :key="poll.id">
         <CardHeader>
-          <CardTitle>
+          <CardTitle class="flex items-center gap-2">
             <NuxtLink :to="'/polls/' + poll.id" class="hover:underline">{{ poll.title }}</NuxtLink>
+            <span v-if="poll.closedAt" class="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">Closed</span>
           </CardTitle>
         </CardHeader>
         <CardContent>

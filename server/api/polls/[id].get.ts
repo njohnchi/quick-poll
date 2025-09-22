@@ -37,6 +37,7 @@ export default defineEventHandler(async (event) => {
     description: poll.description,
     authorId: poll.authorId,
     createdAt: poll.createdAt,
+    closedAt: poll.closedAt,
     options: options.map((o) => ({ id: o.id, text: o.text, votes: votesMap.get(o.id) ?? 0 })),
   }
 })
