@@ -1,6 +1,7 @@
 // filepath: c:\www\quick-poll\server\api\polls\[id].delete.ts
 import { serverSupabaseUser } from '#supabase/server'
 import { eq } from 'drizzle-orm'
+import { useRealtimeHub } from '../../utils/realtime'
 
 function isUuid(id: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
@@ -28,6 +29,8 @@ export default defineEventHandler(async (event) => {
   }
 
   await db.delete(schema.polls).where(eq(schema.polls.id, id))
+
+  const hub = useRealtimeHub()
+  hub.broadcast({ type: 'poll-deleted', pollId: id })
   return { ok: true }
 })
-

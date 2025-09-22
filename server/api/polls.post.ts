@@ -1,4 +1,5 @@
 import { serverSupabaseUser } from '#supabase/server'
+import { useRealtimeHub } from '../utils/realtime'
 
 export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
@@ -29,6 +30,9 @@ export default defineEventHandler(async (event) => {
   const values = options.map((text, idx) => ({ pollId: poll.id, text, position: idx }))
   await db.insert(schema.pollOptions).values(values)
 
+  // Broadcast analytics event
+  const hub = useRealtimeHub()
+  hub.broadcast({ type: 'poll-created', pollId: poll.id, title: poll.title, createdAt: String(poll.createdAt) })
+
   return { id: poll.id }
 })
-

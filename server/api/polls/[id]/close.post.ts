@@ -1,6 +1,7 @@
 // filepath: c:\www\quick-poll\server\api\polls\[id]\close.post.ts
 import { serverSupabaseUser } from '#supabase/server'
 import { eq } from 'drizzle-orm'
+import { useRealtimeHub } from '../../../utils/realtime'
 
 function isUuid(id: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
@@ -35,6 +36,9 @@ export default defineEventHandler(async (event) => {
     .set({ closedAt: new Date() })
     .where(eq(schema.polls.id, id))
     .returning({ id: schema.polls.id, closedAt: schema.polls.closedAt })
+
+  const hub = useRealtimeHub()
+  hub.broadcast({ type: 'poll-closed', pollId: id, closedAt: String(updated.closedAt) })
 
   return updated
 })

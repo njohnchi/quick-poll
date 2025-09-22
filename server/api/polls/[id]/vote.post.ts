@@ -2,6 +2,7 @@
 import { and, eq } from 'drizzle-orm'
 import { getCookie, setCookie } from 'h3'
 import { randomUUID } from 'crypto'
+import { useRealtimeHub } from '../../../utils/realtime'
 
 function isUuid(id: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
@@ -60,6 +61,9 @@ export default defineEventHandler(async (event) => {
   }
 
   await db.insert(schema.pollVotes).values({ pollId, optionId, voterToken, userId: null })
+
+  const hub = useRealtimeHub()
+  hub.broadcast({ type: 'vote-cast', pollId, optionId, createdAt: new Date().toISOString() })
 
   return { ok: true }
 })

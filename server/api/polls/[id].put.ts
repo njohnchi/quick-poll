@@ -1,6 +1,7 @@
 // filepath: c:\www\quick-poll\server\api\polls\[id].put.ts
 import { serverSupabaseUser } from '#supabase/server'
 import { eq } from 'drizzle-orm'
+import { useRealtimeHub } from '../../utils/realtime'
 
 function isUuid(id: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
@@ -52,6 +53,8 @@ export default defineEventHandler(async (event) => {
     .where(eq(schema.polls.id, id))
     .returning({ id: schema.polls.id, title: schema.polls.title, description: schema.polls.description })
 
+  const hub = useRealtimeHub()
+  hub.broadcast({ type: 'poll-updated', pollId: id })
+
   return updated
 })
-
